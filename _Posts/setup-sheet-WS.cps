@@ -9,7 +9,6 @@
  * 
  * TODO:
  * Polish contentLength
- * Polish tooltable -> standardize table cell size
  * Add flute length to tooltable
  * Group settings
  *
@@ -561,6 +560,7 @@ function writePathTableHead() //Write html toolpath table
         divSE("contentHeader","TOOLPATHS - " + cSetup,"border: 1px solid black; border-bottom:none;");
         tableS("pathTable");
             tableRowS();
+                tableHead("N");
                 tableHead("Strategy");
                 tableHead("Tool");
                 tableHead("Tool type");
@@ -788,6 +788,10 @@ const allWorkOfs=[];
 
 var lastSetup="";
 
+//N-code / line tracking
+var currentLine=10;
+var lineIncr=5;
+
 function onSectionEnd() //On end of section
 {
     //Get all wcs
@@ -890,6 +894,7 @@ function onSectionEnd() //On end of section
                 }
 
                 tableRowS("border-right:1px solid black;");
+                    tableCell("");
                     tableCell(textOut);
                 tableRowE();
 
@@ -910,6 +915,7 @@ function onSectionEnd() //On end of section
         var feedPerT=maxFeedrate/(spindleSpd*cTool.numberOfFlutes); //Feed per tooth calc
 
         tableRowS();
+            tableCell(currentLine);
             tableCell(cmt);
             tableCell("T" + cTool.number);
             tableCell(getToolTypeName(cTool.type));
@@ -922,6 +928,8 @@ function onSectionEnd() //On end of section
 
         incPCellCount();
     }
+
+    currentLine+=lineIncr;
 }
 
 //Write inline script portion

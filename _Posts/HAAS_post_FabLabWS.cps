@@ -38,15 +38,12 @@ highFeedrate = (unit == IN) ? 500 : 5000;
 
 // user-defined properties
 properties = {
+  showLineNum: true, //Show line number
   writeMachine: true, // write machine
   writeTools: true, // writes the tools
   writeVersion: false, // include version info
   preloadTool: true, // preloads next tool on tool change if any
   chipTransport: false, // turn on chip transport at start of program
-  showSequenceNumbers: true, // show sequence numbers
-  sequenceNumberStart: 10, // first sequence number
-  sequenceNumberIncrement: 5, // increment for sequence numbers
-  sequenceNumberOnlyOnToolChange: true, // only output sequence numbers on tool change
   optionalStop: true, // optional stop
   separateWordsWithSpace: true, // specifies that the words should be separated with a white space
   useRadius: false, // specifies that arcs should be output using the radius (R word) instead of the I, J, and K words.
@@ -72,15 +69,12 @@ properties = {
 };
 
 propertyDefinitions = {
+  showLineNum: {title:"Show line numbers", description:"Show N-Code before next section", group:0, type:"boolean"},
   writeMachine: {title:"Write machine", description:"Output the machine settings in the header of the code.", group:0, type:"boolean"},
   writeTools: {title:"Write tool list", description:"Output a tool list in the header of the code.", group:0, type:"boolean"},
   writeVersion: {title:"Write version", description:"Write the version number in the header of the code.", group:0, type:"boolean"},
   preloadTool: {title:"Preload tool", description:"Preloads the next tool at a tool change (if any).", type:"boolean"},
   chipTransport: {title:"Use chip transport", description:"Enable to turn on chip transport at start of program.", type:"boolean"},
-  showSequenceNumbers: {title:"Use sequence numbers", description:"Use sequence numbers for each block of outputted code.", group:1, type:"boolean"},
-  sequenceNumberStart: {title:"Start sequence number", description:"The number at which to start the sequence numbers.", group:1, type:"integer"},
-  sequenceNumberIncrement: {title:"Sequence number increment", description:"The amount by which the sequence number is incremented by in each block.", group:1, type:"integer"},
-  sequenceNumberOnlyOnToolChange: {title:"Block number only on tool change", description:"Specifies that block numbers should only be output at tool changes.", type:"boolean"},
   optionalStop: {title:"Optional stop", description:"Specifies that optional stops M1 should be output at tool changes.", type:"boolean"},
   separateWordsWithSpace: {title:"Separate words with space", description:"Adds spaces between words if 'yes' is selected.", type:"boolean"},
   useRadius: {title:"Radius arcs", description:"If yes is selected, arcs are output using radius values rather than IJK.", type:"boolean"},
@@ -183,7 +177,7 @@ var SUB_PATTERN = 1;
 var SUB_CYCLE = 2;
 
 // collected state
-var sequenceNumber;
+//var sequenceNumber;
 var currentWorkOffset;
 var optionalSection = false;
 var forceSpindleSpeed = false;
@@ -201,7 +195,7 @@ var lastSubprogram;
 var initialSubprogramNumber = 90000;
 var definedPatterns = new Array();
 var incrementalMode = false;
-var saveShowSequenceNumbers;
+//var saveShowSequenceNumbers;
 var cycleSubprogramIsActive = false;
 var patternIsActive = false;
 var lastOperationComment = "";
@@ -209,6 +203,13 @@ var incrementalSubprogram;
 var retracted = false; // specifies that the tool has been retracted to the safe plane
 var measureTool = false;
 probeMultipleFeatures = true;
+
+//Line number tracking TODO : add to changelog
+var line_START=10;
+var line_MAX=99999;
+var lineNumber=0;
+var lineNumberIncr=5;
+
 
 // used to convert blocks to optional for safeStartAllOperations, might get used outside of onSection
 var operationNeedsSafeStart = false;
@@ -221,28 +222,14 @@ function writeBlock() {
   var text = formatWords(arguments);
   if (!text) {
     return;
-  }
-  var maximumSequenceNumber = (properties.useSubroutines || properties.useSubroutinePatterns ||
-    properties.useSubroutineCycles) ? initialSubprogramNumber : 99999;
-  if (properties.showSequenceNumbers) {
-    if (sequenceNumber >= maximumSequenceNumber) {
-      sequenceNumber = properties.sequenceNumberStart;
-    }
-    if (optionalSection || skipBlock) {
-      if (text) {
-        writeWords("/", "N" + sequenceNumber, text);
-      }
-    } else {
-      writeWords2("N" + sequenceNumber, arguments);
-    }
-    sequenceNumber += properties.sequenceNumberIncrement;
+  } 
+  
+  if (optionalSection || skipBlock) {
+    writeWords2("/", arguments);
   } else {
-    if (optionalSection || skipBlock) {
-      writeWords2("/", arguments);
-    } else {
-      writeWords(arguments);
-    }
+    writeWords(arguments);
   }
+  
   skipBlock = false;
 }
 
@@ -250,10 +237,7 @@ function writeBlock() {
   Writes the specified block - used for tool changes only.
 */
 function writeToolBlock() {
-  var show = properties.showSequenceNumbers;
-  properties.showSequenceNumbers = show || properties.sequenceNumberOnlyOnToolChange;
   writeBlock(arguments);
-  properties.showSequenceNumbers = show;
 }
 
 /**
@@ -372,11 +356,11 @@ function writeToolMeasureBlock(tool) {
 }
 
 function onOpen() {
+  //Line tracking
+  lineNumber=line_START;
+
   if (properties.useRadius) {
     maximumCircularSweep = toRad(90); // avoid potential center calculation errors for CNC
-  }
-  if (properties.sequenceNumberOnlyOnToolChange) {
-    properties.showSequenceNumbers = false;
   }
 
   gRotationModal.format(69); // Default to G69 Rotation Off
@@ -409,7 +393,6 @@ function onOpen() {
     setWordSeparator("");
   }
 
-  sequenceNumber = properties.sequenceNumberStart;
   writeln("%");
 
   if (programName) {
@@ -1432,8 +1415,7 @@ function subprogramStart(_initialPosition, _abc, _incremental) {
     "N" + nFormat.format(currentSubprogram) +
     conditional(comment, formatComment(comment.substr(0, maximumLineLength - 2 - 6 - 1)))
   );
-  saveShowSequenceNumbers = properties.showSequenceNumbers;
-  properties.showSequenceNumbers = false;
+  
   if (_incremental) {
     setIncrementalMode(_initialPosition, _abc);
   }
@@ -1449,7 +1431,6 @@ function subprogramEnd() {
   }
   forceAny();
   firstPattern = false;
-  properties.showSequenceNumbers = saveShowSequenceNumbers;
   closeRedirection();
 }
 
@@ -1592,11 +1573,23 @@ function onSection() {
     }
   }
 
+  //Line number tracking TODO : add to changelog
+  if(properties.showLineNum)
+  {
+    var nCode="N" + lineNumber;
+
+    lineNumber+=lineNumberIncr;
+    if(lineNumber >= line_MAX) lineNumber=line_START;
+  }
+
   if (hasParameter("operation-comment")) {
     var comment = getParameter("operation-comment");
     if (comment && ((comment !== lastOperationComment) || !patternIsActive || insertToolCall)) {
       writeln("");
-      writeComment(comment);
+
+      if(properties.showLineNum) writeln(nCode + " " + formatComment(comment.substr(0, maximumLineLength - 2))); //Write N-code and sequence header
+      else writeComment(comment); //Else only write header
+      
       lastOperationComment = comment;
     } else if (!patternIsActive || insertToolCall) {
       writeln("");
