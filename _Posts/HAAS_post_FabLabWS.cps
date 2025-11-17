@@ -42,6 +42,7 @@ properties = {
   writeMachine: true, // write machine
   writeTools: true, // writes the tools
   writeVersion: false, // include version info
+  includeStartup: false, //Include line startup in top of program
   preloadTool: true, // preloads next tool on tool change if any
   chipTransport: false, // turn on chip transport at start of program
   optionalStop: true, // optional stop
@@ -73,6 +74,7 @@ propertyDefinitions = {
   writeMachine: {title:"Write machine", description:"Output the machine settings in the header of the code.", group:0, type:"boolean"},
   writeTools: {title:"Write tool list", description:"Output a tool list in the header of the code.", group:0, type:"boolean"},
   writeVersion: {title:"Write version", description:"Write the version number in the header of the code.", group:0, type:"boolean"},
+  includeStartup: {title:"Include startup", description:"Include line startup in top of program", group:0, type:"boolean"},
   preloadTool: {title:"Preload tool", description:"Preloads the next tool at a tool change (if any).", type:"boolean"},
   chipTransport: {title:"Use chip transport", description:"Enable to turn on chip transport at start of program.", type:"boolean"},
   optionalStop: {title:"Optional stop", description:"Specifies that optional stops M1 should be output at tool changes.", type:"boolean"},
@@ -801,7 +803,7 @@ function parkMsg(msg)
   writeOptionalBlock("G53 G00 Z110.0");
   writeOptionalBlock("G53 G00 Y0.0 X-279.0");
 
-  writeOptionalBlock("M00");
+  writeBlock("M00");
   writeComment(msg);
   writeOptionalBlock("");
 
@@ -1573,6 +1575,24 @@ function onSection() {
     }
   }
 
+
+  //TODO : add to changelog
+  if(isFirstSection())
+  {
+    if(properties.includeStartup) //Include line startup in top of program
+    {
+      writeln("");
+
+      writeOptionalBlock("M99 P1"); //Skipped unless block delete active
+
+        writeComment("LINE STARTUP");
+        writeBlock("M99 P0 (STARTUP SELECT)"); //Px sets which line number to start from
+        writeBlock("N0"); //Skip Px if not changed
+
+      writeBlock("N1");
+    }
+  }
+
   //Line number tracking TODO : add to changelog
   if(properties.showLineNum)
   {
@@ -1587,7 +1607,19 @@ function onSection() {
     if (comment && ((comment !== lastOperationComment) || !patternIsActive || insertToolCall)) {
       writeln("");
 
-      if(properties.showLineNum) writeln(nCode + " " + formatComment(comment.substr(0, maximumLineLength - 2))); //Write N-code and sequence header
+      //TODO : add to change log
+      if(properties.showLineNum) 
+      {
+        if(!isFirstSection())
+        {
+          if(tool.number == getPreviousSection().getTool().number)
+          {
+            nCode="(" + nCode + ")"; //If same tool, write n code as comment
+          }
+        }
+        
+        writeln(nCode + " " + formatComment(comment.substr(0, maximumLineLength - 2))); //Write N-code and sequence header
+      }
       else writeComment(comment); //Else only write header
       
       lastOperationComment = comment;
