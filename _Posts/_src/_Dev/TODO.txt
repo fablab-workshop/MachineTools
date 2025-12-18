@@ -18,6 +18,9 @@ TODO:
 	-Finish engrave single and multi line
 	-Finish CLEAN etc
 	-Beta test tool measure
+	-Line number Nx bug in fusion, always N0
+	-Tool meas bug fusion, same tool more then once
+	-Test if when using long Tools onSectionEnd-onSection retract is not too far down (e.g G53 Z0.0)
 
 	RAPTOR post:
 	-Add options to turn off full zretract
