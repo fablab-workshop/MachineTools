@@ -653,7 +653,7 @@ function getWOFS()
   return gFormat.format(53+fwofs);
 }
 
-const toolMeasTag=["MEAS_1","MEAS_2","MEAS_3","MEAS_4","MEAS_5","MEAS_6","MEAS_7","MEAS_8","MEAS_9","MEAS_10","MEAS_ALL"];
+const toolMeasTag=["measure(\"1\")","measure(\"2\")","measure(\"3\")","measure(\"4\")","measure(\"5\")","measure(\"6\")","measure(\"7\")","measure(\"8\")","measure(\"9\")","measure(\"10\")","measure(\"ALL\")"];
 
 function manualToolMeas(toolNum,safeWCS)
 {
@@ -698,10 +698,10 @@ function manualToolMeas(toolNum,safeWCS)
     }
   }
 
-  //No mod                       = Run through normal without stoping
+  //No mod                       = Run through normal without stopping
   //Optional stop                = Run normal with stops after each tool change
   //Optional stop + block delete = Skips skips sequence until next opt. stop
-  //Block delete                 = Skips entire measeure sequence
+  //Block delete                 = Skips entire measure sequence
 
   writeOptionalBlock("T"+ toolNum +" M06");
   writeBlock("M01");
@@ -731,11 +731,16 @@ function manualToolMeasAll()
   writeComment("Manual tool measure - ALL");
 
   var tools=getToolTable();
+  var lastToolNum=0; //Prevent measuring same tool more then once
 
   for(var i=0;i < tools.getNumberOfTools(); ++i)
   {
     var tool=tools.getTool(i);
-    manualToolMeas(tool.number,false);
+    if(tool.number != lastToolNum)
+    {
+      lastToolNum=tool.number;
+      manualToolMeas(tool.number,false);
+    }
   }
 
   writeBlock(getWOFS()); //Return to a safe WCS
@@ -752,7 +757,8 @@ function engraveText(xVal, yVal, zVal, chrHeight, textValue, tNum, hNum, cutFeed
   var cH=Number(chrHeight);
 
   //Setup
-  writeComment("Engrave NC START!");
+  writeln("");
+  writeComment("Text engraving");
 
   writeBlock("T"+tNum+" M06");
   writeBlock("G43 H"+hNum);
@@ -768,8 +774,9 @@ function engraveText(xVal, yVal, zVal, chrHeight, textValue, tNum, hNum, cutFeed
   writeBlock("G90 G53 G00 Z0.0");
 
   writeBlock("M01");
-  writeComment("Engrave NC END!");
-  if(safeWCS) writeBlock(getWOFS()); //Return to a safe WCS
+
+  writeBlock(getWOFS()); //Return to a safe WCS
+  forceSafe(); //Force tool change on next
 }
 
 /* TODO : finish!
@@ -807,18 +814,17 @@ function parkMsg(msg)
   writeComment(msg);
   writeOptionalBlock("");
 
-  writeOptionalBlock("G53 G00 Z0.0");
   writeOptionalBlock(getWOFS());
   forceSafe(); //Force tool change on next
 }
 
-function prepareTap(toolNum)
+function prepareTool(toolNum)
 {
   var defaultTool=10;
   if(typeof toolNum === "undefined") toolNum=defaultTool;
 
   writeBlock("\n");
-  writeComment("TAP PREP");
+  writeComment("TOOL PREP");
 
   //Turn of coolant and spindle
   writeBlock("M09"); 
@@ -831,11 +837,10 @@ function prepareTap(toolNum)
 
   //Stop
   writeBlock("M00");
-  writeComment("TAP");
+  writeComment("PREPARE TOOL");
   writeln("");
 
   //Return
-  writeBlock("G53 G00 Z0.0");
   writeBlock(getWOFS());
   forceSafe(); //Force tool change on next
 }
@@ -864,20 +869,22 @@ function onManualNC(command, value) {
 	  writeComment("Clean");
 	break;
   case COMMAND_ACTION: //Action, use tag to select which
-    //Tag MEAS
+    //measure command
     for(var i=0;i <= 9;++i)
     {
       if(value==toolMeasTag[i]) manualToolMeas(i+1);
     }
     if(value==toolMeasTag[10]) manualToolMeasAll();
 
-    //Tag ENGR
-    var cmd=String(value).split("_");
-    if(cmd[0]=="ENGR")
+    //engrave command
+    var cmd=String(value).split("(");
+    if(cmd[0]=="engrave")
     {
-      //ENGR_5,5,-0.1,4,text!
-      val=String(cmd[1]).split(",");
-      engraveText(val[0],val[1],val[2],val[3],val[4]);
+      //engrave(5,5,-0.1,4,text!)
+
+      allData=cmd[1].substring(0,cmd[1].length-1);
+      dataSplit=String(allData).split(",");
+      engraveText(dataSplit[0],dataSplit[1],dataSplit[2],dataSplit[3],dataSplit[4]);
     }
 
     /* TODO : finish!
@@ -896,16 +903,16 @@ function onManualNC(command, value) {
     }
     */
 
-    //Tag tap
-    var tapCmd=String(value).split("("); //Split string
-    if(value=="tap")
+    //Tool prepare
+    var toolCmd=String(value).split("("); //Split string
+    if(value=="toolPrep()")
     {
-      prepareTap();
+      prepareTool();
     }
-    else if(tapCmd[0]=="tap") //Catch tap with tool specified
+    else if(toolCmd[0]=="toolPrep") //Catch tap with tool specified
     {
-      var toolVal=tapCmd[1].replace(")",""); //Remove end ")"
-      prepareTap(Number(toolVal));
+      var toolVal=toolCmd[1].replace(")",""); //Remove end ")"
+      prepareTool(Number(toolVal));
     }
 
 	break;
@@ -1594,9 +1601,10 @@ function onSection() {
   }
 
   //Line number tracking TODO : add to changelog
+  var nCode="";
   if(properties.showLineNum)
   {
-    var nCode="N" + lineNumber;
+     nCode = "N" + lineNumber;
 
     lineNumber+=lineNumberIncr;
     if(lineNumber >= line_MAX) lineNumber=line_START;
