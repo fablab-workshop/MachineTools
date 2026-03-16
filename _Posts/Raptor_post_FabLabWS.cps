@@ -51,7 +51,8 @@ properties = {
   absoluteRetract: true, //Controls whether zRetracts is done on cord G53 or G54
   zRetractABS: 0, // the z position for retracting tool G28 not possible´
   zRetractREL: 40, //Z pos for retract
-  stopAtStart: false //Insert optional stop at start of program after tool change
+  stopAtStart: false, //Insert optional stop at start of program after tool change
+  toolDiameterLimit: 12 //Tool diameter limit for ATC
 };
 
 //Definitions
@@ -62,6 +63,7 @@ propertyDefinitions = {
   stopAtStart: {title:"Stop at start", description:"Insert optional stop at start of program, after tool change", group:0, type:"boolean"},
   optionalStop: {title:"ToolChange-stop before", description:"Stop before tool change", group:0, type:"boolean"},
   stopAfterTC: {title:"ToolChange-stop after", description:"Stop after tool change", group:0, type:"boolean"},
+  toolDiameterLimit: {title:"Tool Diameter Limit", description:"Tool diameter limit for ATC", group:2, type:"integer"},
   writeMachine: {group:1},
   writeTools: {group:1},
   preloadTool: {group:1},
@@ -314,6 +316,18 @@ function parkMsg(msg)
   forceSafe(); //Force tool change on next
 }
 
+function manualToolSwap(msg)
+{
+  writeComment("Manual tool change");
+  writeBlock("G90");
+  writeBlock("G53 G00 Z0.0");
+  writeBlock("M05");
+  writeBlock("G53 G00 X0.0 Y600.0");
+
+  writeBlock("ASKBOOL\"" + msg + "\""); //Stop and display message
+  writeBlock("M00");
+}
+
 function onComment(message) {
   writeComment(message);
 }
@@ -545,7 +559,24 @@ function onSection() {
       warning(localize("Tool number exceeds maximum value."));
     }
 
-    writeBlock("T" + toolFormat.format(tool.number), mFormat.format(6));
+
+    //TODO : add to changelog
+    if(tool.diameter > properties.toolDiameterLimit) //Tool for this section is to big, change tool to noting then insert desired tool
+    {
+      writeBlock("T" + toolFormat.format(tool.number), mFormat.format(6));
+      manualToolSwap("Press ok then insert tool");
+      writeBlock(formatWCS(currentSection.workOffset)); //Reset to section wcs
+    }
+    else if(getPreviousSection().getTool().diameter > properties.toolDiameterLimit) //Tool for last section to big, manually take out tool, then perform tool change as usual
+    {
+      manualToolSwap("Press ok then remove tool");
+      writeBlock("T" + toolFormat.format(tool.number), mFormat.format(6));
+      writeBlock(formatWCS(currentSection.workOffset)); //Reset to section wcs
+    }
+    else
+    {
+      writeBlock("T" + toolFormat.format(tool.number), mFormat.format(6));
+    }
 
     //TODO : change log add
     if(!isFirstSection() && properties.stopAfterTC) //Stop after tool change

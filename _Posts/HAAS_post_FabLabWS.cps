@@ -10,14 +10,14 @@
   FORKID {241E0993-8BE0-463b-8888-47968B9D7F9F}
 */
 
-var globalPostVersion="GV1.5";
+var MACHINE_TOOLS_VERSION="MT2.0";
 
 description = "HAAS (pre-NGC)";
 vendor = "FabLabWS";
 vendorUrl = "hh.se";
 certificationLevel = 2;
 
-longDescription = "HAAS SMM post for WS by Benjamin Solar 2025 " + globalPostVersion;
+longDescription = "HAAS SMM post for WS by Benjamin Solar 2026 " + MACHINE_TOOLS_VERSION;
 
 extension = "nc";
 programNameIsInteger = true;
@@ -70,35 +70,35 @@ properties = {
 };
 
 propertyDefinitions = {
-  showLineNum: {title:"Show line numbers", description:"Show N-Code before next section", group:0, type:"boolean"},
-  writeMachine: {title:"Write machine", description:"Output the machine settings in the header of the code.", group:0, type:"boolean"},
-  writeTools: {title:"Write tool list", description:"Output a tool list in the header of the code.", group:0, type:"boolean"},
-  writeVersion: {title:"Write version", description:"Write the version number in the header of the code.", group:0, type:"boolean"},
+  showLineNum: {title:"Show line numbers", description:"Show N-Code before next section", group:1, type:"boolean"},
+  writeMachine: {title:"Write machine", description:"Output the machine settings in the header of the code.", group:1, type:"boolean"},
+  writeTools: {title:"Write tool list", description:"Output a tool list in the header of the code.", group:1, type:"boolean"},
+  writeVersion: {title:"Write version", description:"Write the version number in the header of the code.", group:1, type:"boolean"},
   includeStartup: {title:"Include startup", description:"Include line startup in top of program", group:0, type:"boolean"},
-  preloadTool: {title:"Preload tool", description:"Preloads the next tool at a tool change (if any).", type:"boolean"},
-  chipTransport: {title:"Use chip transport", description:"Enable to turn on chip transport at start of program.", type:"boolean"},
-  optionalStop: {title:"Optional stop", description:"Specifies that optional stops M1 should be output at tool changes.", type:"boolean"},
-  separateWordsWithSpace: {title:"Separate words with space", description:"Adds spaces between words if 'yes' is selected.", type:"boolean"},
-  useRadius: {title:"Radius arcs", description:"If yes is selected, arcs are output using radius values rather than IJK.", type:"boolean"},
-  useParametricFeed:  {title:"Parametric feed", description:"Parametric feed values based on movement type are output.", type:"boolean"},
-  showNotes: {title:"Show notes", description:"Enable to output notes for operations.", type:"boolean"},
-  useG0: {title:"Use G0", description:"Specifies that G0s should be used for rapid moves when moving along a single axis.", type:"boolean"},
-  useG28: {title:"Use G28 instead of G53", description:"Specifies that machine retracts should be done using G28 instead of G53.", type:"boolean"},
-  useSubroutines: {title:"Use subroutines", description:"Enables output of subroutines for each operation.", type:"boolean"},
-  useSubroutinePatterns: {title:"Subroutines for patterns", description:"Enable output of subroutines for patterns.", type:"boolean"},
-  useSubroutineCycles: {title:"Subroutines for cycles", description:"Enable output of subroutines for cycles.", type:"boolean"},
-  useG187: {title:"Use G187", description:"Specifies that smoothing using G187 should be used.", type:"boolean"},
-  homePositionCenter: {title:"Home position center", description:"Enable to center the part along X at the end of program for easy access. Requires a CNC with a moving table.", type:"boolean"},
-  optionallyCycleToolsAtStart: {title:"Optionally cycle tools at start", description:"Cycle through each tool used at the beginning of the program when block delete is turned off.", type:"boolean"},
-  optionallyMeasureToolsAtStart: {title:"Optionally measure tools at start", description:"Measure each tool used at the beginning of the program when block delete is turned off.", type:"boolean"},
-  toolBreakageTolerance: {title:"Tool breakage tolerance", description:"Specifies the tolerance for which tool break detection will raise an alarm.", type:"spatial"},
-  safeStartAllOperations: {title:"Safe start all operations", description:"Write optional blocks at the beginning of all operations that include all commands to start program.", type:"boolean"},
-  fastToolChange: {title:"Fast tool change", description:"Skip spindle off, coolant off, and Z retract to make tool change quicker.", type:"boolean"},
-  useG95forTapping: {title:"Use G95 for tapping", description:"use IPR/MPR instead of IPM/MPM for tapping", type:"boolean"},
-  useG73Retract: {title:"G73 cycles include accumulated depth", description:"Use G73 Q K format for accumulated depth support.", type:"boolean"},
-  setting34: {title:"Feed rate calculation diameter", description:"Defines the part diameter in inches that the control uses to calculate feed rates (Setting 34).", type:"spatial", range:[0.1, 9999.0]},
-  useDPMFeeds: {title:"Rotary moves use IPM feeds", description:"Enable to output IPM feeds, disable for Inverse Time feeds with rotary axes moves.", type:"boolean"},
-  measSeqToolDiaLimit: {title:"Meas seq Tool Diameter Limit", description:"Tool diameter limit before it is considered a big tool for auto measure sequence", type:"integer"}
+  preloadTool: {title:"Preload tool", description:"Preloads the next tool at a tool change (if any).", group:10, type:"boolean"},
+  chipTransport: {title:"Use chip transport", description:"Enable to turn on chip transport at start of program.", group:10, type:"boolean"},
+  optionalStop: {title:"Optional stop", description:"Specifies that optional stops M1 should be output at tool changes.", group:0, type:"boolean"},
+  separateWordsWithSpace: {title:"Separate words with space", description:"Adds spaces between words if 'yes' is selected.", group:10, type:"boolean"},
+  useRadius: {title:"Radius arcs", description:"If yes is selected, arcs are output using radius values rather than IJK.", group:10, type:"boolean"},
+  useParametricFeed:  {title:"Parametric feed", description:"Parametric feed values based on movement type are output.", group:10, type:"boolean"},
+  showNotes: {title:"Show notes", description:"Enable to output notes for operations.", group:1, type:"boolean"},
+  useG0: {title:"Use G0", description:"Specifies that G0s should be used for rapid moves when moving along a single axis.", group:10, type:"boolean"},
+  useG28: {title:"Use G28 instead of G53", description:"Specifies that machine retracts should be done using G28 instead of G53.", group:10, type:"boolean"},
+  useSubroutines: {title:"Use subroutines", description:"Enables output of subroutines for each operation.", group:10, type:"boolean"},
+  useSubroutinePatterns: {title:"Subroutines for patterns", description:"Enable output of subroutines for patterns.", group:10, type:"boolean"},
+  useSubroutineCycles: {title:"Subroutines for cycles", description:"Enable output of subroutines for cycles.", group:10, type:"boolean"},
+  useG187: {title:"Use G187", description:"Specifies that smoothing using G187 should be used.", group:10, type:"boolean"},
+  homePositionCenter: {title:"Home position center", description:"Enable to center the part along X at the end of program for easy access. Requires a CNC with a moving table.", group:10, type:"boolean"},
+  optionallyCycleToolsAtStart: {title:"Optionally cycle tools at start", description:"Cycle through each tool used at the beginning of the program when block delete is turned off.", group:10, type:"boolean"},
+  optionallyMeasureToolsAtStart: {title:"Optionally measure tools at start", description:"Measure each tool used at the beginning of the program when block delete is turned off.", group:10, type:"boolean"},
+  toolBreakageTolerance: {title:"Tool breakage tolerance", description:"Specifies the tolerance for which tool break detection will raise an alarm.", group:10, type:"spatial"},
+  safeStartAllOperations: {title:"Safe start all operations", description:"Write optional blocks at the beginning of all operations that include all commands to start program.", group:10, type:"boolean"},
+  fastToolChange: {title:"Fast tool change", description:"Skip spindle off, coolant off, and Z retract to make tool change quicker.", group:10, type:"boolean"},
+  useG95forTapping: {title:"Use G95 for tapping", description:"use IPR/MPR instead of IPM/MPM for tapping", group:10, type:"boolean"},
+  useG73Retract: {title:"G73 cycles include accumulated depth", description:"Use G73 Q K format for accumulated depth support.", group:10, type:"boolean"},
+  setting34: {title:"Feed rate calculation diameter", description:"Defines the part diameter in inches that the control uses to calculate feed rates (Setting 34).", group:10, type:"spatial", range:[0.1, 9999.0]},
+  useDPMFeeds: {title:"Rotary moves use IPM feeds", description:"Enable to output IPM feeds, disable for Inverse Time feeds with rotary axes moves.", group:10, type:"boolean"},
+  measSeqToolDiaLimit: {title:"Meas seq Tool Diameter Limit", description:"Tool diameter limit before it is considered a big tool for auto measure sequence", group:2, type:"integer"}
 };
 
 var singleLineCoolant = false; // specifies to output multiple coolant codes in one line rather than in separate lines
@@ -207,10 +207,10 @@ var measureTool = false;
 probeMultipleFeatures = true;
 
 //Line number tracking TODO : add to changelog
-var line_START=10;
-var line_MAX=99999;
-var lineNumber=0;
-var lineNumberIncr=5;
+var LINE_NUMBER_START=10;
+var LINE_NUMBER_MAX=99999;
+var currentLineNumber=LINE_NUMBER_START;
+var LINE_NUMBER_INCREMENT=5;
 
 
 // used to convert blocks to optional for safeStartAllOperations, might get used outside of onSection
@@ -358,9 +358,6 @@ function writeToolMeasureBlock(tool) {
 }
 
 function onOpen() {
-  //Line tracking
-  lineNumber=line_START;
-
   if (properties.useRadius) {
     maximumCircularSweep = toRad(90); // avoid potential center calculation errors for CNC
   }
@@ -435,7 +432,7 @@ function onOpen() {
   }
 
   //Write post version
-  writeComment(globalPostVersion);
+  writeComment(MACHINE_TOOLS_VERSION);
   
   // dump machine configuration
   var vendor = machineConfiguration.getVendor();
@@ -1601,14 +1598,10 @@ function onSection() {
   }
 
   //Line number tracking TODO : add to changelog
-  var nCode="";
-  if(properties.showLineNum)
-  {
-     nCode = "N" + lineNumber;
+  var nCode = "N" + currentLineNumber;
 
-    lineNumber+=lineNumberIncr;
-    if(lineNumber >= line_MAX) lineNumber=line_START;
-  }
+  currentLineNumber = currentLineNumber + LINE_NUMBER_INCREMENT;
+  if(currentLineNumber >= LINE_NUMBER_MAX) currentLineNumber=LINE_NUMBER_START;
 
   if (hasParameter("operation-comment")) {
     var comment = getParameter("operation-comment");

@@ -15,14 +15,14 @@ Outputs measure sequence only, if posted in conjunction with other setups will f
 --Benjamin Solar 2024
 */
 
-var globalPostVersion="GV1.5";
+var MACHINE_TOOLS_VERSION="MT2.0";
 
 description = "HAAS (pre-NGC)";
 vendor = "FabLabWS";
 vendorUrl = "hh.se";
 certificationLevel = 2;
 
-longDescription = "Outputs measure sequence only " + globalPostVersion;
+longDescription = "Outputs measure sequence only " + MACHINE_TOOLS_VERSION;
 
 extension = "nc";
 programNameIsInteger = true;
@@ -359,7 +359,7 @@ function onOpen() {
     }
   
     //Write post version
-    writeComment(globalPostVersion);
+    writeComment(MACHINE_TOOLS_VERSION);
 
     // dump machine configuration
     var vendor = machineConfiguration.getVendor();
