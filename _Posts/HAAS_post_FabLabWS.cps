@@ -842,6 +842,23 @@ function prepareTool(toolNum)
   forceSafe(); //Force tool change on next
 }
 
+function forceSafeToolSingle()
+{
+  writeBlock("\n");
+  writeComment("SAFE TOOL CHANGE");
+
+  writeBlock("G90");
+  writeBlock("G53 G00 Z110.0");
+  writeBlock("G53 G00 X-400.0");
+
+  //Stop
+  writeBlock("M01");
+
+  //Return
+  writeBlock(getWOFS());
+  forceSafe(); //Force tool change on next
+}
+
 function onManualNC(command, value) {
   switch (command) {
   case COMMAND_COMMENT: //Write comment to gcode
@@ -910,6 +927,12 @@ function onManualNC(command, value) {
     {
       var toolVal=toolCmd[1].replace(")",""); //Remove end ")"
       prepareTool(Number(toolVal));
+    }
+
+    //Force safe tool change
+    if(value=="longToolSafe")
+    {
+      forceSafeToolSingle();
     }
 
 	break;
@@ -1561,11 +1584,53 @@ function onSection() {
 
   operationNeedsSafeStart = properties.safeStartAllOperations && !isFirstSection();
 
+  var toolLengthLimit=150;
+  var zSafeRetractPos=110;
+  var xSafeRetractPos=-400;
+  var toolTooLong=false;
+  var alwaysLongLong=false;
+
   if ((insertToolCall && !properties.fastToolChange) || newWorkOffset || newWorkPlane || toolChecked) {
     
     // stop spindle before retract during tool change
     if (insertToolCall && !isFirstSection() && !toolChecked && !properties.fastToolChange) {
       onCommand(COMMAND_STOP_SPINDLE);
+    }
+
+    // TODO changelog
+    //Check if tool is too long
+    if(isFirstSection())
+    {
+      if(tool.bodyLength >= toolLengthLimit) //First change to long
+      {
+        toolTooLong=true;
+        writeBlock("G90");
+        writeBlock("G53 G00 Z0.0");
+        writeBlock("G53 G00 X" + xyzFormat.format(xSafeRetractPos));
+      }
+    }
+    else
+    {
+      if((getPreviousSection().getTool().bodyLength >= toolLengthLimit) && (tool.bodyLength <= toolLengthLimit)) //Change from long to normal
+      {
+        writeBlock("G90");
+        writeBlock("G53 G00 Z" + xyzFormat.format(zSafeRetractPos));
+        writeBlock("G53 G00 X" + xyzFormat.format(xSafeRetractPos));
+      }
+      if((tool.bodyLength >= toolLengthLimit) && (getPreviousSection().getTool().bodyLength >= toolLengthLimit) || (alwaysLongLong)) //Change from long tool to long tool
+      {
+        toolTooLong=true;
+        writeBlock("G90");
+        writeBlock("G53 G00 Z" + xyzFormat.format(zSafeRetractPos));
+        writeBlock("G53 G00 X" + xyzFormat.format(xSafeRetractPos));
+      }
+      if((tool.bodyLength <= toolLengthLimit) && (tool.bodyLength >= toolLengthLimit)) //Change from short to long
+      {
+        toolTooLong=true;
+        writeBlock("G90");
+        writeBlock("G53 G00 Z0.0");
+        writeBlock("G53 G00 X" + xyzFormat.format(xSafeRetractPos));
+      }
     }
     
     // retract to safe plane
@@ -1698,6 +1763,11 @@ function onSection() {
     );
     if (tool.comment) {
       writeComment(tool.comment);
+    }
+    if(toolTooLong) // TODO add to changelog
+    {
+      writeBlock("G90");
+      writeBlock("G53 G00 Z" + xyzFormat.format(zSafeRetractPos));
     }
     if (measureTool) {
       writeToolMeasureBlock(tool);
